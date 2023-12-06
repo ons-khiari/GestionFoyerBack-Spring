@@ -5,6 +5,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -13,15 +14,16 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class Reservation {
-    @Id
-    String idReservation;
 
-    @Temporal(TemporalType.DATE)
-    LocalDate anneeUniversitaire;
+    @Id
+    private String idReservation;
+
+    private LocalDate anneUniversitere;
 
     boolean estValide;
 
-    @ManyToMany(cascade = CascadeType.ALL )
-    Set<Etudiant> etudiants;
+    @ManyToMany
+    List<Etudiant> etudiants;
 }

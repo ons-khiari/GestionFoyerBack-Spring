@@ -8,11 +8,13 @@ import com.esprit.gestionfoyerback.Enum.TypeChambre;
 import com.esprit.gestionfoyerback.Repository.ChambreRepo;
 import com.esprit.gestionfoyerback.Repository.EtudiantRepo;
 import com.esprit.gestionfoyerback.Repository.ReservationRepo;
+import io.jsonwebtoken.lang.Assert;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,96 +22,99 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class ReservationImp implements ReservationService {
-    private final ReservationRepo reservationRepo;
-    private final EtudiantRepo etudiantRepo;
-    private final ChambreRepo chambreRepo;
+    private final ReservationRepo reservationRepositorie;
+    private final EtudiantRepo etudiantRepository;
+    private final ChambreRepo chambreRepository;
 
     @Override
-    public List<Reservation> retrieveAllReservation() {
-        return (List<Reservation>) reservationRepo.findAll();
+    public Reservation addReservation(Reservation reservation) {
+        return reservationRepositorie.save(reservation);
     }
 
     @Override
-    public Reservation updateReservation(Reservation res) {
-        return reservationRepo.save(res);
+    public List<Reservation> findAllReservation() {
+        return (List<Reservation>)reservationRepositorie.findAll();
     }
 
     @Override
-    public Reservation retrieveReservation(long idReservation) {
-        return reservationRepo.findById(idReservation).orElse(null);
+    public Reservation findReservationById(String id) {
+        return reservationRepositorie.findById(id).isPresent() ? reservationRepositorie.findById(id).get() : null;
     }
 
     @Override
-    public Reservation ajouterReservation(Long idChambre, Long cin) {
-        Chambre chambre = chambreRepo.findById(idChambre).orElse(null);
-        Etudiant etudiant = etudiantRepo.findByCin(cin);
+    public String deleteReservationById(String id) {
+        if(reservationRepositorie.findById(id).isPresent()){
+            reservationRepositorie.deleteById(id);
+            return "Deleted"+reservationRepositorie.findById(id).get().toString();
+        }else
+            return "etudiant with ID : "+id+" Doesn't exist";    }
 
-        if (chambre == null) {
-            throw new IllegalArgumentException("Chambre introuvable.");
+    @Override
+    public Reservation updateReservation(Reservation reservation) {
+        return reservationRepositorie.save(reservation);
+    }
+
+    @Override
+    @Transactional
+    public Reservation ajouterReservation(long idChambre, long cinEtudiant) {
+        LocalDate startDate = LocalDate.of(LocalDate.now().getYear(),1,1);
+        LocalDate endDate = LocalDate.of(LocalDate.now().getYear(),12,31);
+        Assert.isTrue(reservationRepositorie.existsByEtudiantsCinAndAnneUniversitereBetween(cinEtudiant,startDate, endDate)," you have a reservation !!! ");
+        Chambre chambre= chambreRepository.findById(idChambre).orElseThrow(() -> new IllegalArgumentException("no room found"));
+        Etudiant etudiant= etudiantRepository.findByCin(cinEtudiant).orElseThrow(() -> new IllegalArgumentException("no Etudiant found"));
+        String id =chambre.getNumeroChambre()+"-"+chambre.getBlocs().getNomBloc()+"-"+LocalDate.now().getYear();
+        Reservation reservation= reservationRepositorie.findById(id).orElse(
+                Reservation.builder()
+                        .idReservation(id)
+                        .anneUniversitere(LocalDate.now())
+                        .estValide(true)
+                        .etudiants(new ArrayList<Etudiant>()).build()
+        );
+        Assert.isTrue(reservation.isEstValide(),"room not available");
+        reservation.getEtudiants().add(etudiant);
+
+        if (!chambre.getReservations().contains(reservation)){
+            reservation=reservationRepositorie.save(reservation);
+            chambre.getReservations().add(reservation);
         }
 
-        if (etudiant == null) {
-            throw new IllegalArgumentException("Etudiant introuvable.");
+        switch (chambre.getTypeC()){
+            case SIMPLE -> reservation.setEstValide(false);
+            case DOUBLE -> {if(reservation.getEtudiants().size()==2){reservation.setEstValide(false);}}
+            case TRIPLE -> {if(reservation.getEtudiants().size()==3){reservation.setEstValide(false);}}
         }
 
-        Bloc blocs = chambre.getBlocs();
-        if (blocs == null) {
-            throw new IllegalArgumentException("Bloc introuvable pour la chambre.");
-        }
 
-        String idReservation = chambre.getNumeroChambre() + "-" + blocs.getNomBloc().replace(" ", "")
-                + "-" + LocalDate.now().getYear();
 
-        int capaciteMax = 0;
-        if (TypeChambre.SIMPLE.equals(chambre.getTypeC())) {
-            capaciteMax = 1;
-        } else if (TypeChambre.DOUBLE.equals(chambre.getTypeC())) {
-            capaciteMax = 2;
-        } else if (TypeChambre.TRIPLE.equals(chambre.getTypeC())) {
-            capaciteMax = 3;
-        }
-
-        if (chambre.getReservations().size() >= capaciteMax) {
-            throw new IllegalStateException("La capacité maximale de la chambre est atteinte.");
-        }
-
-        Reservation reservation = new Reservation();
-        reservation.setIdReservation(idReservation);
-        reservation.setAnneeUniversitaire(LocalDate.now());
-        reservation.setEstValide(true);
-
-        Set<Etudiant> etudiants = new HashSet<>();
-        etudiants.add(etudiant);
-        reservation.setEtudiants(etudiants);
-
-        Reservation savedReservation = reservationRepo.save(reservation);
-
-        chambre.getReservations().add(savedReservation);
-        chambreRepo.save(chambre);
-
-        return savedReservation;
+        return reservation;
     }
 
     @Override
     @Transactional
     public Reservation annulerReservation(Long cinEtudiant) {
-        Etudiant etudiant = etudiantRepo.findByCin(cinEtudiant);
+        // Trouver l'étudiant et sa réservation
+        Etudiant etudiant = etudiantRepository.findByCin(cinEtudiant).orElseThrow(() -> new IllegalArgumentException("no etudiant"));
 
+        // Supposition: chaque étudiant a au maximum une réservation valide
         Reservation reservation = etudiant.getReservations().stream()
                 .filter(Reservation::isEstValide)
                 .findFirst()
                 .orElse(null);
 
+        // Mettre à jour l'état de la réservation
         reservation.setEstValide(false);
 
+        // Désaffecter l'étudiant
         reservation.getEtudiants().remove(etudiant);
 
-        Chambre chambreAssociee = chambreRepo.findByReservationsContains(reservation);
+        // Désaffecter la chambre associée et mettre à jour sa capacité
+        Chambre chambreAssociee = chambreRepository.findByReservationsContains(reservation);
         if (chambreAssociee != null) {
             chambreAssociee.getReservations().remove(reservation);
-            chambreRepo.save(chambreAssociee);
+            chambreRepository.save(chambreAssociee); // Sauvegarder les changements dans la chambre
         }
 
-        return reservationRepo.save(reservation);
+        // Sauvegarder les modifications
+        return reservationRepositorie.save(reservation);
     }
 }

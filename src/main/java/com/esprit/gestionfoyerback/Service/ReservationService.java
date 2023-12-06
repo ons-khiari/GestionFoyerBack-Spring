@@ -7,13 +7,16 @@ import java.util.List;
 
 public interface ReservationService {
 
-    List<Reservation> retrieveAllReservation();
+    Reservation addReservation(Reservation reservation);
 
-    Reservation updateReservation (Reservation reservation);
+    List<Reservation> findAllReservation();
 
-    Reservation retrieveReservation (long idReservation);
+    Reservation findReservationById(String id);
 
-    Reservation ajouterReservation (Long idChambre, Long cinEtudiant) ;
+    String deleteReservationById(String id);
+    Reservation updateReservation(Reservation reservation);
+
+    public Reservation ajouterReservation (long idChambre, long cinEtudiant);
 
     Reservation annulerReservation (Long cinEtudiant) ;
 }

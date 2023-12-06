@@ -6,8 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EtudiantRepo extends JpaRepository<Etudiant,Long> {
-    Etudiant findByCin(Long cin);
+    Optional<Etudiant> findByCin(Long cin);
     List<Etudiant> findByRole(Role role);
 }
