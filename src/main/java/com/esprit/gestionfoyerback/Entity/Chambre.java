@@ -1,6 +1,7 @@
 package com.esprit.gestionfoyerback.Entity;
 
 import com.esprit.gestionfoyerback.Enum.TypeChambre;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,22 +9,35 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.Set;
 
+
+@Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@JsonIgnoreProperties("chambres")
+@Builder
+@EqualsAndHashCode
+@ToString
+@Table(name = "Chambre")
 public class Chambre {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long idChambre;
-    long numeroChambre;
+    @Setter(AccessLevel.NONE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY )
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private long idChambre;
+
+    Long numeroChambre;
+
     @Enumerated(EnumType.STRING)
-    TypeChambre typeChambre;
+    TypeChambre typeC;
+
+
     @ManyToOne
+    @JoinColumn(name = "idBloc")
+    @JsonIgnore
     Bloc blocs;
-    @OneToMany(cascade = CascadeType.ALL)
+
+    @OneToMany
     Set<Reservation> reservations;
 }

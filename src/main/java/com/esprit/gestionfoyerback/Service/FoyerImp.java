@@ -83,7 +83,7 @@ public class FoyerImp implements FoyerService{
 
     @Override
     public long getIdParNom(String nomFoyer) {
-        Foyer foyer=foyerRepo.findByNomFoyer(nomFoyer);
+        Foyer foyer=foyerRepo.findByNomFoye(nomFoyer);
         long id =foyer.getIdFoyer();
         return id ;
     }

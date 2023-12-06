@@ -1,54 +1,87 @@
 package com.esprit.gestionfoyerback.Controller;
 
+import com.esprit.gestionfoyerback.Entity.Bloc;
 import com.esprit.gestionfoyerback.Entity.Chambre;
-import com.esprit.gestionfoyerback.Enum.TypeChambre;
+import com.esprit.gestionfoyerback.Repository.BlocRepo;
+import com.esprit.gestionfoyerback.Repository.ChambreRepo;
 import com.esprit.gestionfoyerback.Service.ChambreService;
+import com.esprit.gestionfoyerback.dto.AddChambreDto;
+import com.esprit.gestionfoyerback.dto.ChambreDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("chambre")
+@CrossOrigin(origins = "http://localhost:4200")
+@RequestMapping("/chambre")
 @RequiredArgsConstructor
+@RestController
 public class ChambreController {
     private final ChambreService chambreService;
 
-    @GetMapping
-    public List<Chambre> retrieveAllChambres() {
-        return chambreService.retrieveAllChambres();
+    @PostMapping("/new/bloc")
+    public ResponseEntity<String> addChambreToBloc(@RequestBody AddChambreDto chambre) {
+        chambreService.addChambreToBloc(chambre);
+        return ResponseEntity.ok("chambre added to bloc successfully");
     }
 
-    @PostMapping
-    public Chambre addChambre(@RequestBody Chambre chambre) {
-        return chambreService.addChambre(chambre);
+    private final ChambreRepo chambreRepositorie;
+    @GetMapping("/chambres")
+    public List<ChambreDto> getAllchambres() {
+        List<Chambre> chambres = chambreRepositorie.findAll();
+        List<ChambreDto> chambreDtos = new ArrayList<>();
+
+        for (Chambre chambre : chambres) {
+            ChambreDto chambreDto = new ChambreDto();
+            chambreDto.setIdChambre(chambre.getIdChambre());
+            chambreDto.setNumeroChambre(chambre.getNumeroChambre());
+            chambreDto.setTypeC(chambre.getTypeC());
+            chambreDto.setNomBloc(chambre.getBlocs().getNomBloc());
+
+
+            chambreDtos.add(chambreDto);
+        }
+
+        return chambreDtos;
     }
 
-    @PutMapping
-    public Chambre updateChambre(@RequestBody Chambre chambre) {
-        return chambreService.updateChambre(chambre);
+    private final BlocRepo blocRepositorie;
+    @GetMapping("/blocnames")
+    public List<String> getBlocNames() {
+        List<Bloc> blocs = blocRepositorie.findAll();
+        return blocs.stream()
+                .map(Bloc::getNomBloc)
+                .collect(Collectors.toList());
     }
 
-    @GetMapping("{idChambre}")
-    public Chambre retrieveChambre(@PathVariable long idChambre) {
-        return chambreService.retrieveChambre(idChambre);
+
+    @PutMapping("/update/{idChambre}")
+    public Chambre updateChambre(@PathVariable long idChambre,@RequestBody AddChambreDto chambre) {
+        return chambreService.updateChambre(idChambre,chambre);
     }
 
-    @GetMapping("/getChambresParBlocEtType/{idBloc}/{typeChambre}")
-    public List<Chambre> getChambresParBlocEtType(@PathVariable Long idBloc, @PathVariable TypeChambre typeChambre) {
-        return chambreService.getChambresParBlocEtType(idBloc, typeChambre);
+    @GetMapping("/getId/{idChambre}")
+    public Chambre getId(@PathVariable long idChambre) {
+        return chambreService.findChambreById(idChambre);
     }
 
-    @GetMapping("/nomByUniversite/{nomUniversite}")
-    public List<Chambre> getChambresParNomUniversite(@PathVariable String nomUniversite) {
-        return chambreService.getChambresParNomUniversite(nomUniversite);
-    }
-
-    @GetMapping("/nonReserveByUniversiteAndType/{nomUniversite}/{typeChambre}/{anneeUniversitaire}")
-    public List<Chambre> getChambresNonReserveParNomUniversiteEtTypeChambre(
-            @PathVariable String nomUniversite,
-            @PathVariable TypeChambre typeChambre,
-            @PathVariable String anneeUniversitaire) {
-        return chambreService.getChambresNonReserveParNomUniversiteEtTypeChambre(nomUniversite, typeChambre, anneeUniversitaire);
+    @DeleteMapping("/delete/{idChambre}")
+    public ResponseEntity<String> deletechambre(@PathVariable long idChambre) {
+        try {
+            Chambre chambre = chambreService.findChambreById(idChambre);
+            if ( chambre != null) {
+                chambreService.deleteChambreById(idChambre);
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            // Handle other exceptions with a 500 Internal Server Error
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

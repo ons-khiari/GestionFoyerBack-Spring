@@ -1,6 +1,10 @@
 package com.esprit.gestionfoyerback.Repository;
 import com.esprit.gestionfoyerback.Entity.Bloc;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 
-public interface BlocRepo extends CrudRepository<Bloc,Long> {
+import java.util.Optional;
+
+public interface BlocRepo extends JpaRepository<Bloc,Long> {
+    Optional<Bloc> findByNomBloc(String nomBloc);
 }

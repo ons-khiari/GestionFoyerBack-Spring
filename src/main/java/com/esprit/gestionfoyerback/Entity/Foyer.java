@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -22,6 +23,6 @@ public class Foyer {
     @JsonIgnore
     Universite universite;
     @OneToMany(mappedBy = "foyer",cascade =CascadeType.ALL)
-    Set<Bloc> blocs;
+    List<Bloc> blocs;
 
 }

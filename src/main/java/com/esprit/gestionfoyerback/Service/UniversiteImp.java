@@ -37,7 +37,7 @@ public class UniversiteImp implements UniversiteService {
 
     @Override
     public Universite affecterFoyerAUniversite( String  nomFoyer ,  long iduniv) {
-        Foyer foyer=foyerRepo.findByNomFoyer(nomFoyer);
+        Foyer foyer=foyerRepo.findByNomFoye(nomFoyer);
         Universite universite=universiteRepo.findById(iduniv).orElse(null);
         universite.setFoyers(foyer);
         return universiteRepo.save(universite);

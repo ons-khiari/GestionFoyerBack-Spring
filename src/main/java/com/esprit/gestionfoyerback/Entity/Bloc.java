@@ -1,25 +1,39 @@
 package com.esprit.gestionfoyerback.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 
-import java.util.Set;
 
+import java.util.List;
+
+@Entity
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@Builder
+@EqualsAndHashCode
+@ToString
+@Table(name = "Bloc")
 public class Bloc {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long idBloc;
+    @Setter(AccessLevel.NONE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY )
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private long idBloc;
+
     String nomBloc;
-    long capaciteBloc;
+    Long capaciteBloc;
+
+
     @ManyToOne
+    @JoinColumn(name = "idFoyer")
+    @JsonIgnore
     Foyer foyer;
-    @OneToMany(mappedBy = "blocs", cascade = CascadeType.ALL)
-    Set<Chambre> chambres;
+
+    @OneToMany(mappedBy = "blocs", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Chambre> chambres;
+
 }

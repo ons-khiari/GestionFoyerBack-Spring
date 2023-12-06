@@ -1,19 +1,23 @@
 package com.esprit.gestionfoyerback.Service;
 
 import com.esprit.gestionfoyerback.Entity.Bloc;
+import com.esprit.gestionfoyerback.dto.AddBlocRequest;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface BlocService {
-    List<Bloc> retrieveAllBlocs();
+    Bloc addBloc(Bloc bloc);
 
-    Bloc updateBloc (Bloc bloc);
+    List<Bloc> getAllBloc();
 
-    Bloc addBloc (Bloc bloc);
+    Bloc findBlocById(Long id);
 
-    Bloc retrieveBloc (long idBloc);
+    public void deleteBlocById(long id);
+    Bloc updateBloc(long id, AddBlocRequest upbloc);
 
-    void removeBloc (long idBloc);
-
+    Bloc addBlocAndAsigneToFoyer(long idFoyer, Bloc bloc);
     Bloc affecterChambresABloc(List<Long> idChambre, Long idBloc);
+
+    public ResponseEntity<String> addBlocToFoyer(AddBlocRequest request);
 }

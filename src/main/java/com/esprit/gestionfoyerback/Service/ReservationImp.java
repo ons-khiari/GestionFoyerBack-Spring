@@ -61,11 +61,11 @@ public class ReservationImp implements ReservationService {
                 + "-" + LocalDate.now().getYear();
 
         int capaciteMax = 0;
-        if (TypeChambre.SIMPLE.equals(chambre.getTypeChambre())) {
+        if (TypeChambre.SIMPLE.equals(chambre.getTypeC())) {
             capaciteMax = 1;
-        } else if (TypeChambre.DOUBLE.equals(chambre.getTypeChambre())) {
+        } else if (TypeChambre.DOUBLE.equals(chambre.getTypeC())) {
             capaciteMax = 2;
-        } else if (TypeChambre.TRIPLE.equals(chambre.getTypeChambre())) {
+        } else if (TypeChambre.TRIPLE.equals(chambre.getTypeC())) {
             capaciteMax = 3;
         }
 
