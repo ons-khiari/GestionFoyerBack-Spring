@@ -84,4 +84,9 @@ public class ChambreController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/bloc/{blockId}")
+    public List<Chambre> getRoomsByBlock(@PathVariable Long blockId) {
+        return chambreService.getChambresByBloc(blockId);
+    }
 }

@@ -21,11 +21,12 @@ public class ReservationController {
 
     }
 
-    @PostMapping("/new/{idChambre}/{cin}")
-    public Reservation addReservation(@PathVariable Long idChambre, @PathVariable Long cin) {
-        return reservationService.ajouterReservation(idChambre,cin);
-    }
+    @PutMapping("/adduniversitychambrebloc/{idChambre}/{cinEtudiant}")
+    public Reservation addReservationn(@PathVariable("idChambre") long idChambre, @PathVariable("cinEtudiant") long cinEtudiant) {
+        Reservation rv = reservationService.ajouterReservation(idChambre, cinEtudiant);
+        return rv;
 
+    }
 
     @GetMapping("/getId/{idReservation}")
     public Reservation getId(@PathVariable String idReservation) {

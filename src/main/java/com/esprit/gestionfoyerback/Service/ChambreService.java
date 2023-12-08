@@ -16,4 +16,6 @@ public interface ChambreService {
     List<Chambre> getChambresParBlocEtType (Long idBloc, TypeChambre typeC) ;
     public Chambre updateChambre(long id, AddChambreDto upchambre);
     public ResponseEntity<String> addChambreToBloc(AddChambreDto chambre);
+    List<Chambre> getChambresByBloc(Long blockId);
+
 }

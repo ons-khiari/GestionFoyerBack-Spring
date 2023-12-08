@@ -1,4 +1,5 @@
 package com.esprit.gestionfoyerback.Entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -23,5 +24,6 @@ public class Etudiant extends User{
     Date dateNaissance;
 
     @ManyToMany(cascade = CascadeType.ALL,mappedBy = "etudiants")
+    @JsonIgnore
     Set<Reservation> Reservations;
 }

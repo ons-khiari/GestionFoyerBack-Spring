@@ -17,4 +17,5 @@ public interface ChambreRepo extends JpaRepository<Chambre,Long> {
     Chambre findByReservationsContains(Reservation reservation);
 
     List<Chambre> findChambreByBlocs(Bloc bloc);
+    List<Chambre> findByBlocs_IdBloc(long idBloc);
 }

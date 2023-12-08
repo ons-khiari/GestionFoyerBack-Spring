@@ -15,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -95,6 +97,17 @@ public class BlocImp implements BlocService {
         foyerRepositorie.save(foyer);
 
         return ResponseEntity.ok("Bloc added to Foyer successfully");
+    }
+
+    @Override
+    public List<Bloc> getBlocksByFoyer(long idFoyer) {
+        return blocRepositorie.findByFoyer_IdFoyer(idFoyer);
+    }
+
+    @Override
+    public List<Chambre> getChambresByBloc(long blockId) {
+        Optional<Bloc> blockOptional = blocRepositorie.findById(blockId);
+        return blockOptional.map(Bloc::getChambres).orElse(Collections.emptyList());
     }
 
 

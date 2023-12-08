@@ -87,4 +87,9 @@ public class BlocController {
                 .map(Foyer::getNomFoyer)
                 .collect(Collectors.toList());
     }
+
+    @GetMapping("/foyer/{foyerId}")
+    public List<Bloc> getBlocksByFoyer(@PathVariable Long foyerId) {
+        return blocService.getBlocksByFoyer(foyerId);
+    }
 }

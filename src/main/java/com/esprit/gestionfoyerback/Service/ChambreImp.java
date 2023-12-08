@@ -77,6 +77,11 @@ public class ChambreImp implements ChambreService {
     }
 
     @Override
+    public List<Chambre> getChambresByBloc(Long blockId) {
+        return chambreRepositorie.findByBlocs_IdBloc(blockId);
+    }
+
+    @Override
     public Chambre updateChambre(long id, AddChambreDto upchambre) {
         Chambre chambre = chambreRepositorie.findById(id).orElseThrow(()->new ResourceNotFoundException("Not found tutorial with id "));
         Bloc bloc = blocRepositorie.findByNomBloc(upchambre.getNomBloc())

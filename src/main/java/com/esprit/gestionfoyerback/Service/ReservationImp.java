@@ -5,6 +5,7 @@ import com.esprit.gestionfoyerback.Entity.Chambre;
 import com.esprit.gestionfoyerback.Entity.Etudiant;
 import com.esprit.gestionfoyerback.Entity.Reservation;
 import com.esprit.gestionfoyerback.Enum.TypeChambre;
+import com.esprit.gestionfoyerback.Repository.BlocRepo;
 import com.esprit.gestionfoyerback.Repository.ChambreRepo;
 import com.esprit.gestionfoyerback.Repository.EtudiantRepo;
 import com.esprit.gestionfoyerback.Repository.ReservationRepo;
@@ -14,10 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +23,7 @@ public class ReservationImp implements ReservationService {
     private final ReservationRepo reservationRepositorie;
     private final EtudiantRepo etudiantRepository;
     private final ChambreRepo chambreRepository;
+    private final BlocRepo blocRepo;
 
     @Override
     public Reservation addReservation(Reservation reservation) {
@@ -57,43 +56,90 @@ public class ReservationImp implements ReservationService {
     @Override
     @Transactional
     public Reservation ajouterReservation(long idChambre, long cinEtudiant) {
-        LocalDate startDate = LocalDate.of(LocalDate.now().getYear(),1,1);
-        LocalDate endDate = LocalDate.of(LocalDate.now().getYear(),12,31);
-        Assert.isTrue(reservationRepositorie.existsByEtudiantsCinAndAnneUniversitereBetween(cinEtudiant,startDate, endDate)," you have a reservation !!! ");
-        Chambre chambre= chambreRepository.findById(idChambre).orElseThrow(() -> new IllegalArgumentException("no room found"));
-        Etudiant etudiant= etudiantRepository.findByCin(cinEtudiant).orElseThrow(() -> new IllegalArgumentException("no Etudiant found"));
-        String id =chambre.getNumeroChambre()+"-"+chambre.getBlocs().getNomBloc()+"-"+LocalDate.now().getYear();
-        Reservation reservation= reservationRepositorie.findById(id).orElse(
-                Reservation.builder()
-                        .idReservation(id)
-                        .anneUniversitere(LocalDate.now())
-                        .estValide(true)
-                        .etudiants(new ArrayList<Etudiant>()).build()
-        );
-        Assert.isTrue(reservation.isEstValide(),"room not available");
-        reservation.getEtudiants().add(etudiant);
+        Chambre chambre = chambreRepository.findById(idChambre).orElse(null);
+        Etudiant etudiant = etudiantRepository.findByCin(cinEtudiant);
 
-        if (!chambre.getReservations().contains(reservation)){
-            reservation=reservationRepositorie.save(reservation);
-            chambre.getReservations().add(reservation);
+        Long numChambre = chambre.getNumeroChambre();
+        Bloc bloc = chambre.getBlocs();
+        float capacite = bloc.getCapaciteBloc();
+        String nomBloc = bloc.getNomBloc();
+        LocalDate today = LocalDate.now();
+        Reservation rv = new Reservation();
+
+        if (!capaciteMax(chambre)) {
+            LocalDate annee = LocalDate.now();
+            Reservation Res = new Reservation();
+            String numReservation = numChambre + "-" + nomBloc + "-" + annee.getYear();
+            Res.setIdReservation(numReservation);
+            Res.setEstValide(true);
+            Res.setAnneUniversitere(today);
+
+            // Set the etudiants list of the Reservation entity
+            Res.setEtudiants(Collections.singletonList(etudiant));
+
+            bloc.setCapaciteBloc((long) (capacite + 1));
+            reservationRepositorie.save(Res);
+
+            etudiant.getReservations().add(Res);
+            etudiantRepository.save(etudiant);
+
+            int capacit = (getCapaciteMaximaleSelonType(chambre.getTypeC())) - 1;
+            TypeChambre type = getTypeCSelonChambre(capacit);
+            chambre.setTypeC(type);
+            chambre.getReservations().add(Res);
+            chambreRepository.save(chambre);
+            blocRepo.save(bloc);
+            rv = Res;
+
+        } else {
+            System.out.println("vous avez dépassé la capacité");
         }
 
-        switch (chambre.getTypeC()){
-            case SIMPLE -> reservation.setEstValide(false);
-            case DOUBLE -> {if(reservation.getEtudiants().size()==2){reservation.setEstValide(false);}}
-            case TRIPLE -> {if(reservation.getEtudiants().size()==3){reservation.setEstValide(false);}}
+        return rv;
+    }
+
+    int getCapaciteMaximaleSelonType(TypeChambre typeChambre) {
+        switch (typeChambre) {
+            case SIMPLE:
+                return 1;
+            case DOUBLE:
+                return 2;
+            case TRIPLE:
+                return 3;
+            default:
+                throw new IllegalArgumentException("Type de chambre non pris en charge : " + typeChambre);
         }
+    }
+    TypeChambre getTypeCSelonChambre(int capacite) {
+        switch (capacite) {
+            case 0:
+                return TypeChambre.SIMPLE;
+            case 1:
+                return TypeChambre.DOUBLE;
+            case 2:
+                return TypeChambre.TRIPLE;
+            default:
+                throw new IllegalArgumentException("Type de chambre non pris en charge : " + capacite);
+        }
+    }
+    boolean capaciteMax(Chambre chambre){
+        int nombreResParChambre = chambre.getReservations().size();
+        System.out.println("le nombre par chambre est " + nombreResParChambre);
 
+        int capaciteMax = getCapaciteMaximaleSelonType(chambre.getTypeC());
+        System.out.println("la capacité par chambre est " + capaciteMax);
 
+        boolean isCapacityExceeded = nombreResParChambre >= capaciteMax;
+        System.out.println("La capacité est dépassée : " + isCapacityExceeded);
 
-        return reservation;
+        return isCapacityExceeded;
     }
 
     @Override
     @Transactional
     public Reservation annulerReservation(Long cinEtudiant) {
         // Trouver l'étudiant et sa réservation
-        Etudiant etudiant = etudiantRepository.findByCin(cinEtudiant).orElseThrow(() -> new IllegalArgumentException("no etudiant"));
+        Etudiant etudiant = etudiantRepository.findByCin(cinEtudiant);
 
         // Supposition: chaque étudiant a au maximum une réservation valide
         Reservation reservation = etudiant.getReservations().stream()
