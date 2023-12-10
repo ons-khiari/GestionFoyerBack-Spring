@@ -15,6 +15,12 @@ import java.util.List;
 public class ReservationController {
     private final ReservationService reservationService;
 
+    @GetMapping("/{cin}")
+    public ResponseEntity<List<Reservation>> getReservationsForCurrentUser(@PathVariable long cin) {
+        List<Reservation> reservations = reservationService.getReservationsForCurrentUser(cin);
+        return ResponseEntity.ok(reservations);
+    }
+
     @GetMapping("/getAll")
     public List<Reservation> getAllReservation() {
         return reservationService.findAllReservation();

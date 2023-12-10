@@ -6,6 +6,7 @@ import com.esprit.gestionfoyerback.Entity.Reservation;
 import java.util.List;
 
 public interface ReservationService {
+    List<Reservation> getReservationsForCurrentUser(long currentUserCin);
 
     Reservation addReservation(Reservation reservation);
 

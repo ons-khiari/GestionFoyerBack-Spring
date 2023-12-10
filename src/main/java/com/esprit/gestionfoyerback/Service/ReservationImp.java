@@ -136,6 +136,15 @@ public class ReservationImp implements ReservationService {
     }
 
     @Override
+    public List<Reservation>getReservationsForCurrentUser(long currentUserCin) {
+        Etudiant currentUser = etudiantRepository.findByCin(currentUserCin);
+
+        List<Reservation> allReservations = reservationRepositorie.findByEtudiants(currentUser);
+
+        return allReservations;
+    }
+
+    @Override
     @Transactional
     public Reservation annulerReservation(Long cinEtudiant) {
         // Trouver l'étudiant et sa réservation
